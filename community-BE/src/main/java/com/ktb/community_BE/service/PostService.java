@@ -46,12 +46,13 @@ public class PostService {
         ));
 
         return new PostDto(post.getId(),
-                user.getId(), null, post.getTitle(),
+                user.getId(), null, null,post.getTitle(),
                 postContent.getContent(), postContent.getImage(),0,0,0,
                 LocalDateTime.now(), LocalDateTime.now());
     }
 
     //게시물 상세조회
+    @Transactional
     public PostDto getPostDetail(Long id){
         Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
@@ -66,7 +67,7 @@ public class PostService {
 
         post.addViewCount();
         return new PostDto(
-                post.getId(), user.getId(), user.getNickname(),
+                post.getId(), user.getId(), user.getNickname(), user.getProfileImage(),
                 post.getTitle(), postContent.getContent(), postContent.getImage(),
                 post.getViewCount(),post.getCommentCount(),post.getLikeCount(),
                 post.getCreatedAt(), post.getUpdatedAt()
@@ -77,6 +78,9 @@ public class PostService {
     @Transactional
     public PostDto updatePost(PostDto postRequest){
         Post post = postRepository.findById(postRequest.getId()).orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        if(post.getUser().getId() != postRequest.getUserId()){
+            throw new IllegalArgumentException("비정상적인 접근입니다.");
+        }
         PostContent postContent = postContentRepository.findById(postRequest.getId()).orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
         if (postRequest.getTitle() != null){
@@ -91,7 +95,7 @@ public class PostService {
         post.setUpdatedAt(LocalDateTime.now());
 
         return new PostDto(post.getId(),
-                post.getUser().getId(),null, post.getTitle(),
+                post.getUser().getId(),null, null,post.getTitle(),
                 postContent.getContent(), postContent.getImage(),
                 post.getViewCount(),post.getCommentCount(),post.getLikeCount(),
                 post.getCreatedAt(), post.getUpdatedAt());
@@ -99,8 +103,11 @@ public class PostService {
 
     //게시물 소프트 삭제
     @Transactional
-    public void updatePostStatus(Long id){
+    public void updatePostStatus(Long id, Long userId){
         Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        if(post.getUser().getId() != userId){
+            throw new IllegalArgumentException("비정상적인 접근입니다.");
+        }
         post.setPostStatusDeleted();
         post.setDeletedAt(LocalDateTime.now());
     }
@@ -136,6 +143,7 @@ public class PostService {
                             post.getId(),
                             user.getId(),
                             user.getNickname(),
+                            user.getProfileImage(),
                             post.getTitle(),
                             null,
                             null,

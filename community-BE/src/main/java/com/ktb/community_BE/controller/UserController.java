@@ -6,6 +6,7 @@ import com.ktb.community_BE.entity.User;
 import com.ktb.community_BE.entity.UserStatus;
 import com.ktb.community_BE.service.UserAuthService;
 import com.ktb.community_BE.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -44,32 +46,28 @@ public class UserController {
 
     //내 정보 가져오기 : 세션Id 사용
     @GetMapping("/me")
-    public ResponseEntity<UserDto> getUserInfo(HttpSession session) {
-        Long userId = userAuthService.getSessionId(session);
+    public ResponseEntity<Object> getUserInfo(@RequestAttribute("userId") Long userId) {
         UserDto response = userService.getMyInfo(userId);
         return ResponseEntity.ok(response);
     }
 
     // 내 프로필 수정(닉네임, 프로필 사진)
     @PatchMapping("/me")
-    public ResponseEntity<Void> updateProfile(@RequestBody UserDto userRequest, HttpSession session){
-        Long userId = userAuthService.getSessionId(session);
+    public ResponseEntity<Void> updateProfile(@RequestBody UserDto userRequest, @RequestAttribute("userId") Long userId){
         userService.updateInfo(userId,userRequest);
         return ResponseEntity.noContent().build();
     }
     // 내 비밀번호 수정
     @PatchMapping("/me/auth")
-    public ResponseEntity<Void> updatePassword(@RequestBody UserDto userRequest, HttpSession session){
-        Long userId = userAuthService.getSessionId(session);
+    public ResponseEntity<Void> updatePassword(@RequestBody UserDto userRequest,@RequestAttribute("userId") Long userId){
         userService.updateAuth(userId,userRequest);
         return ResponseEntity.noContent().build();
     }
 
     // 회원 탈퇴 : 내 정보의 상태만 변경 (활성화 -> 탈퇴)
     @PatchMapping("/me/status")
-    public ResponseEntity<Void> withdrawUser(HttpSession session){
-        Long userId = userAuthService.getSessionId(session);
-        userService.withdrawUser(userId);
+    public ResponseEntity<Void> withdrawUser(HttpServletResponse response, @RequestAttribute("userId") Long userId){
+        userService.withdrawUser(response, userId);
         return ResponseEntity.noContent().build();
     }
 

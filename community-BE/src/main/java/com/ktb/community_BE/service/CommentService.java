@@ -46,6 +46,7 @@ public class CommentService {
                 post.getId(),
                 user.getId(),
                 user.getNickname(),
+                user.getProfileImage(),
                 comment.getContent(),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt()
@@ -55,8 +56,10 @@ public class CommentService {
     //댓글 수정
     @Transactional
     public CommentDto updateComment(CommentDto commentRequest) {
-        Comment comment = commentRepository.findById(commentRequest.getId()).orElseThrow(() -> new IllegalArgumentException("Post not found"));
-
+        Comment comment = commentRepository.findById(commentRequest.getId()).orElseThrow(() -> new IllegalArgumentException("comment not found"));
+        if(commentRequest.getUserId() != comment.getUser().getId()){
+            throw new IllegalArgumentException("비정상적인 접근입니다.");
+        }
         if (commentRequest.getContent() != null){
             comment.changeContent(commentRequest.getContent());
         }
@@ -66,6 +69,7 @@ public class CommentService {
                 comment.getPost().getId(),
                 comment.getUser().getId(),
                 comment.getUser().getNickname(),
+                comment.getUser().getProfileImage(),
                 comment.getContent(),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt()
@@ -74,11 +78,13 @@ public class CommentService {
 
     //댓글 삭제
     @Transactional
-    public void deleteComment(Long id, Long postId){
+    public void deleteComment(Long id, Long postId, Long userId){
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found"));
-
+        Comment comment = commentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        if(userId != comment.getUser().getId()){
+            throw new IllegalArgumentException("비정상적인 접근입니다.");
+        }
         post.minusCommentCount();
-
         commentRepository.deleteById(id);
     }
 
@@ -92,6 +98,7 @@ public class CommentService {
                         comment.getPost().getId(),
                         comment.getUser().getId(),
                         comment.getUser().getNickname(),
+                        comment.getUser().getProfileImage(),
                         comment.getContent(),
                         comment.getCreatedAt(),
                         comment.getUpdatedAt()

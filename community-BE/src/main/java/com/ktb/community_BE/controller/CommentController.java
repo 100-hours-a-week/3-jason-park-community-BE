@@ -6,6 +6,7 @@ import com.ktb.community_BE.service.PostService;
 import com.ktb.community_BE.service.UserAuthService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,19 +33,17 @@ public class CommentController {
 
     // 댓글 작성
     @PostMapping
-    public ResponseEntity<CommentDto> createComment(@PathVariable Long postId,@RequestBody CommentDto commentRequest, HttpSession session){
-        Long userId = userAuthService.getSessionId(session);
+    public ResponseEntity<CommentDto> createComment(@PathVariable Long postId,@RequestBody CommentDto commentRequest, @RequestAttribute("userId") Long userId){
         commentRequest.setPostId(postId);
         commentRequest.setUserId(userId);
         CommentDto response= commentService.createComment(commentRequest);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // 댓글 수정
     @PatchMapping("/{commentId}")
-    public ResponseEntity<CommentDto> updateComment(@PathVariable Long postId, @PathVariable Long commentId, @RequestBody CommentDto commentRequest,HttpSession session){
-        Long userId = userAuthService.getSessionId(session);
+    public ResponseEntity<CommentDto> updateComment(@PathVariable Long postId, @PathVariable Long commentId, @RequestBody CommentDto commentRequest,@RequestAttribute("userId") Long userId){
         commentRequest.setPostId(postId);
         commentRequest.setUserId(userId);
         commentRequest.setId(commentId);
@@ -57,16 +56,14 @@ public class CommentController {
 
     // 댓글 삭제
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long postId, @PathVariable Long commentId, HttpSession session){
-        Long userId = userAuthService.getSessionId(session);
+    public ResponseEntity<Void> deleteComment(@PathVariable Long postId, @PathVariable Long commentId, @RequestAttribute("userId") Long userId){
         //권한 검사는 service에 구현? or controller에 구현? -> 조사하기
-
-        commentService.deleteComment(commentId,postId);
+        commentService.deleteComment(commentId,postId, userId);
         return ResponseEntity.noContent().build();
     }
 
     // 댓글 리스트 조회
-    @GetMapping
+    @GetMapping("/list")
     public List<CommentDto> getPostList(@PathVariable Long postId) {
         return commentService.getCommentList(postId);
     }
